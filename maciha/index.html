@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <script src="/_sdk/telemetry_sdk.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Birthday Surprise ❤️</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Playfair+Display:wght@700&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <style>
+:root{--vh:1vh;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;}
+#landing{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:opacity 1s;background:linear-gradient(180deg,#ff90b6 0%, #ff6b9d 40%);}
+#landing.hidden{opacity:0;pointer-events:none;}
+.heart-float{position:fixed;color:#ff6b9d;font-size:20px;animation:floatUp 6s linear forwards;pointer-events:none;z-index:50;}
+@keyframes floatUp{0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-110vh);opacity:0;}}
+.confetti{position:fixed;width:8px;height:8px;top:-10px;animation:confettiFall 4s linear forwards;z-index:2000;pointer-events:none;}
+@keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+.card-reveal{opacity:0;transform:translateY(60px);transition:opacity 1s,transform 1s;}
+.card-reveal.show{opacity:1;transform:translateY(0);}
+.gallery3d{perspective:1200px;display:flex;}
+.float-card{ /* animation moved to .float-inner so outer transforms (scale) won't override it */
+  transition: transform .32s cubic-bezier(.2,.9,.3,1), opacity .28s ease, box-shadow .32s ease;
+  will-change: transform, opacity;
+  transform-origin: center center;
+}
+@keyframes floatCard{0%,100%{transform:rotateY(0) translateY(0);}50%{transform:rotateY(12deg) translateY(-12px);}}
+
+/* inner element holds the float animation so scaling doesn't stop motion */
+.float-inner{
+  animation:floatCard 6s ease-in-out infinite;
+  transform-style:preserve-3d;
+  width:100%;height:100%;
+  transition: transform .3s;
+  will-change: transform;
+}
+
+.float-card:hover{ /* outer hover for scale/interaction */
+  transform: translateY(-6px) scale(1.04);
+  z-index: 20;
+}
+#music-bar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:900;}
+.typewriter-cursor{display:inline-block;width:2px;height:1.2em;background:#ff6b9d;animation:blink .7s infinite;vertical-align:text-bottom;}
+@keyframes blink{50%{opacity:0;}}
+
+/* Rotating radio volume knob */
+.radio-knob {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffffff22, #ff6b9d44);
+  border: 2px solid rgba(255, 107, 157, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+  user-select: none;
+}
+
+.radio-knob:hover {
+  box-shadow: 0 6px 18px rgba(255, 107, 157, 0.3);
+  border-color: rgba(255, 107, 157, 0.6);
+}
+
+.radio-knob:active {
+  cursor: grabbing;
+}
+
+.radio-knob-indicator {
+  position: absolute;
+  width: 2px;
+  height: 12px;
+  background: linear-gradient(to bottom, #ff6b9d, #ff8db2);
+  border-radius: 1px;
+  top: 6px;
+  transform-origin: center 21px;
+}
+
+/* volume button aesthetics */
+.vol-btn{
+  width:36px;height:36px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#ff6b9d22,#ff6b9d11);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.06);
+  transition:transform .12s,background .12s,box-shadow .12s;
+}
+.vol-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.45);}
+.vol-indicator{min-width:48px;text-align:center;font-size:12px;color:#fff;opacity:.9;}
+
+/* gallery interaction - scale on outer .float-card; inner animation continues */
+.gallery3d .float-card {
+  cursor: pointer;
+  z-index: 10;
+}
+.gallery3d .float-card:hover {
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
+}
+
+/* when an item is active (selected) - scale outer card so inner animation persists */
+.gallery3d .float-card.active {
+  transform: translateY(-12px) scale(1.12) !important;
+  z-index: 60 !important;
+  box-shadow: 0 30px 70px rgba(0,0,0,.6);
+  opacity: 1;
+}
+
+/* non-selected items slightly shrink but keep their floating inner motion */
+.gallery3d .float-card.inactive {
+  transform: translateY(0) scale(0.92) !important;
+  z-index: 5 !important;
+  opacity: 0.95;
+  filter: saturate(.9) contrast(.98);
+}
+
+/* make it smoother on small screens */
+@media (max-width: 640px) {
+  .gallery3d .float-card.active { transform: translateY(-8px) scale(1.06) !important; }
+  .gallery3d .float-card.inactive { transform: translateY(0) scale(0.96) !important; opacity:0.92; }
+}
+
+/* focus outline for keyboard users */
+.gallery3d .float-card:focus {
+  outline: 3px solid rgba(255,107,157,0.18);
+  outline-offset: 6px;
+  border-radius: 14px;
+}
+
+/* PHONE VIEW SPECIFIC STYLES */
+.view-phone main{font-size:16px;}
+.view-phone .gallery3d{
+  flex-direction:column;
+  gap:18px;
+  align-items:center;
+}
+.view-phone .float-card{
+  width:86% !important;
+  height:auto !important;
+  border-radius:14px;
+}
+.view-phone .float-card .float-inner img{
+  height:220px;
+  object-fit:cover;
+}
+.view-phone .float-card:hover{ transform: none; } /* disable hover transform on touch devices */
+.view-phone .float-card.active {
+  transform: scale(1.04) !important; /* keep smaller scale for phone */
+  z-index: 100 !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+}
+.view-phone .float-card.inactive {
+  transform: scale(0.95) !important;
+  opacity:0.95;
+}
+
+/* center selected item on phone more strongly */
+.view-phone .float-card.active {
+  margin-inline:auto;
+}
+
+/* device modal */
+#device-modal{position:fixed;inset:0;z-index:2200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);}
+#device-modal .modal-card{width:92%;max-width:480px;padding:20px;border-radius:14px;background:linear-gradient(180deg,#0b0820 0%, #0f0b17 60%);border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 80px rgba(0,0,0,0.6);}
+#device-modal .choices{display:flex;gap:12px;justify-content:center;margin-top:16px;}
+#device-modal .choice-btn{flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:#111827;color:#fff;font-weight:700;cursor:pointer;}
+#device-modal .choice-btn:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,0.45);}
+
+/* change view button */
+#change-view-btn{position:fixed;right:12px;top:12px;z-index:2100;background:linear-gradient(135deg,#ff6b9d,#ff8db2);color:#fff;padding:8px 10px;border-radius:9999px;border:1px solid rgba(255,255,255,0.06);box-shadow:0 6px 20px rgba(0,0,0,0.4);cursor:pointer;}
+#change-view-btn:hover{transform:translateY(-3px);}
+
+  </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen w-full bg-neutral-950 text-white">
+
+  <!-- Device choice modal (shown on first run or when user wants to change) -->
+  <div id="device-modal" style="display:none;">
+    <div class="modal-card">
+      <h3 style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:6px;">Choose your preferred view</h3>
+      <p style="color:#c7c7d1;font-size:13px;margin-bottom:12px;">Pick the UI layout you'd like to see — PC or Phone. You can change this anytime with the "Change view" button.</p>
+      <div class="choices">
+        <button id="choose-pc" class="choice-btn">PC View 🖥️</button>
+        <button id="choose-phone" class="choice-btn">Phone View 📱</button>
+      </div>
+      <p style="text-align:center;color:#9aa0a6;font-size:12px;margin-top:12px;">Tip: we can suggest one based on your device too.</p>
+    </div>
+  </div>
+
+  <!-- Change view quick button -->
+  <button id="change-view-btn" title="Change view">Change view</button>
+
+  <div id="landing" class="bg-gradient-to-br from-pink-500 to-rose-300 text-white text-center px-6">
+   <h1 class="text-4xl md:text-5xl font-bold mb-4" style="font-family:'Playfair Display',serif;">Happy Birthday Maicha!</h1>
+   <p id="typewriter-line" class="text-lg mb-8 min-h-[2rem]"><span class="typewriter-cursor"></span></p>
+   <button class="px-8 py-4 rounded-full text-lg font-bold shadow-lg hover:scale-105 transition-transform bg-white text-pink-600" onclick="openSurprise()">Open Surprise ❤️</button>
+  </div>
+
+  <main class="hidden bg-stone-950 min-h-screen text-white" id="main-content">
+   
+   <nav class="sticky top-0 z-40 flex gap-3 justify-center py-4 backdrop-blur-xl bg-black/40 border-b border-white/10">
+    <button onclick="document.getElementById('video-section').scrollIntoView({behavior:'smooth'})" class="px-4 py-2 rounded-full text-sm font-bold text-white bg-pink-500/80 hover:bg-pink-500 transition-colors">🎥 Videos</button> 
+    <button onclick="document.getElementById('gallery-section').scrollIntoView({behavior:'smooth'})" class="px-4 py-2 rounded-full text-sm font-bold text-white bg-purple-500/80 hover:bg-purple-500 transition-colors">🖼️ Gallery</button> 
+    <button onclick="document.getElementById('special-section').scrollIntoView({behavior:'smooth'})" class="px-4 py-2 rounded-full text-sm font-bold text-white bg-rose-500/80 hover:bg-rose-500 transition-colors">❤️ Special</button>
+   </nav>
+
+   <section id="video-section" class="min-h-screen flex items-center justify-center px-4 py-20">
+    <div class="card-reveal w-full max-w-4xl text-center">
+       <h3 class="text-2xl md:text-3xl font-bold mb-2 text-pink-400" style="font-family:'Playfair Display',serif;">Your Video Surprises ✨</h3>
+       <p class="text-gray-400 mb-10 text-xs md:text-sm">Watch them play directly here instantly!</p>
+       
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+         <div class="p-4 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md shadow-xl flex flex-col">
+           <h4 class="text-base font-bold mb-3 text-pink-300 text-left px-1">✨ Chapter One</h4>
+           <div class="relative aspect-video w-full bg-neutral-900 rounded-xl overflow-hidden group border border-white/5">
+             <video id="player-1" class="w-full h-full object-contain" controls preload="metadata" playsinline>
+               <source src="video/VID_20260103_071556_066.mp4" type="video/mp4">
+               Your browser does not support embedded playback.
+             </video>
+           </div>
+         </div>
+
+         <div class="p-4 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md shadow-xl flex flex-col">
+           <h4 class="text-base font-bold mb-3 text-purple-300 text-left px-1">✨ Chapter Two</h4>
+           <div class="relative aspect-video w-full bg-neutral-900 rounded-xl overflow-hidden group border border-white/5">
+             <video id="player-2" class="w-full h-full object-contain" controls preload="metadata" playsinline>
+               <source src="video/VID_20260103_071559_261.mp4" type="video/mp4">
+               Your browser does not support embedded playback.
+             </video>
+           </div>
+         </div>
+       </div>
+    </div>
+   </section>
+
+   <section id="gallery-section" class="min-h-screen flex flex-col items-center justify-center px-4 py-20">
+    <h2 class="text-3xl font-bold mb-10 text-pink-400" style="font-family:'Playfair Display',serif;">Your Captured Moments I Have</h2>
+    <div class="gallery3d flex flex-wrap justify-center gap-6 max-w-6xl">
+     
+     <div class="float-card w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden shadow-xl">
+       <img src="IMG_20260128_213232_129.jpg" class="w-full h-full object-cover" loading="lazy" alt="Memory 1">
+     </div>
+     
+     <div class="float-card w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden shadow-xl" style="animation-delay:0.8s;">
+       <img src="4.jpg" class="w-full h-full object-cover" loading="lazy" alt="Memory 2">
+     </div>
+     
+     <div class="float-card w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden shadow-xl" style="animation-delay:1.6s;">
+       <img src="IMG_20260427_204615_863.jpg" class="w-full h-full object-cover" loading="lazy" alt="Memory 3">
+     </div>
+     
+     <div class="float-card w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden shadow-xl" style="animation-delay:2.4s;">
+       <img src="5.jpg" class="w-full h-full object-cover" loading="lazy" alt="Memory 4">
+     </div>
+
+     <div class="float-card w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden shadow-xl" style="animation-delay:3.2s;">
+       <img src="6.jpg" class="w-full h-full object-cover" loading="lazy" alt="Memory 5">
+     </div>
+
+     <div class="float-card w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden shadow-xl" style="animation-delay:4s;">
+       <img src="Untitled%20design.jpg" class="w-full h-full object-cover" loading="lazy" alt="Memory 6">
+     </div>
+
+     <div class="float-card w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden shadow-xl" style="animation-delay:4.8s;">
+       <img src="7.jpg" class="w-full h-full object-cover" loading="lazy" alt="Memory 7">
+     </div>
+
+    </div>
+   </section>
+
+   <section id="special-section" class="min-h-screen flex items-center justify-center px-4 py-20">
+    <div class="card-reveal max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center rounded-2xl p-8 md:p-12 backdrop-blur-xl bg-white/[0.07] border border-white/10 shadow-2xl">
+      <div class="text-left">
+        <h2 class="text-3xl font-bold mb-6 text-rose-400" style="font-family:'Playfair Display',serif;">A Letter For You</h2>
+        <div id="letter-text" class="text-gray-200 text-base leading-relaxed mb-6 min-h-[200px] whitespace-pre-wrap font-sans"></div>
+        <div class="flex gap-3">
+          <button class="px-6 py-3 rounded-full font-bold bg-pink-500 hover:bg-pink-600 transition-colors text-white" onclick="playToneAudio()">Click for Tone 🎵</button>
+          <button class="px-4 py-3 rounded-full font-bold bg-white/10 text-white hidden md:inline-flex items-center" onclick="toggleMusic()" id="music-toggle-btn-small">⏯</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center">
+        <div class="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl float-card" style="animation:floatCard 6s ease-in-out infinite;">
+          <img src="6.jpg" alt="Memory beside letter" class="w-full h-80 md:h-96 object-cover">
+        </div>
+      </div>
+    </div>
+   </section>
+
+   <section class="flex items-center justify-center py-20">
+    <h2 class="text-3xl font-bold text-center text-gray-400" style="font-family:'Playfair Display',serif;">Made with ❤️ for Charchita</h2>
+   </section>
+  </main>
+
+  <div id="music-bar" class="hidden rounded-full px-4 py-2 flex items-center gap-3 backdrop-blur-xl bg-black/60 border border-white/10">
+    <button onclick="toggleMusic()" class="vol-btn text-white" id="music-toggle-btn">▶</button> 
+    <span class="text-sm text-white/80">Birthday BG Music 🎧</span>
+    <div class="flex items-center gap-2 ml-2">
+      <!-- Radio knob for volume control -->
+      <div class="radio-knob" id="volume-knob" title="Rotate to adjust volume">
+        <div class="radio-knob-indicator"></div>
+      </div>
+      <div class="vol-indicator" id="volume-level">20%</div>
+    </div>
+  </div>
+
+  <script src="/_sdk/editing_sdk.js"></script>
+  <script>
+/* ---------- Device selection & view application ---------- */
+const DEVICE_KEY = 'preferredView'; // 'pc' or 'phone'
+const modal = document.getElementById('device-modal');
+const btnPC = document.getElementById('choose-pc');
+const btnPhone = document.getElementById('choose-phone');
+const changeViewBtn = document.getElementById('change-view-btn');
+
+function applyView(view){
+  document.body.classList.remove('view-phone','view-pc');
+  if(view === 'phone') document.body.classList.add('view-phone');
+  else document.body.classList.add('view-pc');
+  try{ localStorage.setItem(DEVICE_KEY, view); }catch(e){}
+  hideDeviceModal();
+  // small accessibility: set aria label for change button
+  changeViewBtn.setAttribute('aria-label', `Current view: ${view}. Click to change.`);
+}
+
+function showDeviceModal(){
+  modal.style.display = 'flex';
+  // make modal focusable and focus first choice
+  btnPC.focus();
+}
+
+function hideDeviceModal(){
+  modal.style.display = 'none';
+}
+
+// Suggest default based on screen or touch support
+function suggestedView(){
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  const small = Math.min(window.innerWidth, window.innerHeight) <= 780;
+  return (isTouch || small) ? 'phone' : 'pc';
+}
+
+// init: check saved choice
+(function initDeviceChoice(){
+  let saved;
+  try{ saved = localStorage.getItem(DEVICE_KEY); }catch(e){ saved = null; }
+  if(saved === 'pc' || saved === 'phone'){
+    applyView(saved);
+    hideDeviceModal();
+  } else {
+    // Ask the user, but suggest one (we still show modal as requested)
+    const suggestion = suggestedView();
+    // optional: annotate buttons with suggested (visual hint)
+    if(suggestion === 'phone') btnPhone.textContent = 'Phone View 📱 (recommended)';
+    else btnPC.textContent = 'PC View 🖥️ (recommended)';
+    showDeviceModal();
+  }
+})();
+
+btnPC.addEventListener('click', ()=> applyView('pc'));
+btnPhone.addEventListener('click', ()=> applyView('phone'));
+changeViewBtn.addEventListener('click', showDeviceModal);
+
+/* Close modal if user presses Escape */
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && modal.style.display === 'flex') hideDeviceModal();
+});
+
+/* ---------- Existing page behaviors (landing, music, letter, gallery) ---------- */
+
+const landingText="Some people leave memories... some leave stories... and some become both ❤️";
+let ti=0;
+function typeLanding(){
+  const el=document.getElementById('typewriter-line');
+  if(ti<landingText.length){
+    el.innerHTML=landingText.slice(0,ti+1)+'<span class="typewriter-cursor"></span>';
+    ti++;
+    setTimeout(typeLanding,50);
+  }else{
+    el.innerHTML=landingText;
+  }
+}
+typeLanding();
+
+function openSurprise(){
+  document.getElementById('landing').classList.add('hidden');
+  setTimeout(()=>{document.getElementById('landing').style.display='none';},1000);
+  document.getElementById('main-content').classList.remove('hidden');
+  document.getElementById('music-bar').classList.remove('hidden');
+  launchConfetti();
+  startMusic(); // autoplay once when opening
+  typeLetter();
+  setTimeout(()=>{
+    document.getElementById('video-section').scrollIntoView({behavior:'smooth'});
+  },500);
+}
+
+const letterMsg=`Dear Charchita (Maicha),
+
+Happy Birthday! 🎁 Simple words can't fully express how much your presence and support have meant to 
+me in the past. Even with the distance between us lately, my wishes for your happiness and success 
+remain exactly the same. You have a truly kind heart, and you deserve the absolute best that life has 
+to offer. I hope you have a fantastic birthday! 👊💖
+
+Have an incredible birthday! ❤️
+Thank you for existing in my life.`;
+
+let li=0;
+function typeLetter(){
+  const el=document.getElementById('letter-text');
+  if(li<letterMsg.length){
+    el.textContent=letterMsg.slice(0,li+1);
+    li++;
+    setTimeout(typeLetter,35);
+  }
+}
+
+window.addEventListener('scroll',()=>{
+  document.querySelectorAll('.card-reveal').forEach(c=>{
+    if(c.getBoundingClientRect().top<window.innerHeight-100) c.classList.add('show');
+  });
+});
+
+setInterval(()=>{
+  const h=document.createElement('div');
+  h.className='heart-float';
+  h.textContent='❤';
+  h.style.left=Math.random()*100+'vw';
+  h.style.fontSize=(14+Math.random()*16)+'px';
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),6000);
+},400);
+
+function launchConfetti(){
+  for(let i=0;i<60;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'vw';
+    c.style.background=`hsl(${Math.random()*360},90%,60%)`;
+    c.style.animationDelay=(Math.random()*0.5)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),4500);
+  }
+}
+
+// Background Music Audio System
+let audio = new Audio('audio/WhatsApp%20Audio%202026-06-23%20at%2010.18.47%20PM.mpeg');
+audio.preload = 'auto';
+audio.loop = false; // play once, do not loop
+let musicPlaying = false;
+let audioPlayedOnce = false; // ensure autoplay on open works only once
+
+// Tone Audio Element
+let toneAudio = new Audio('audio/Click%20for%20Tone.mpeg');
+toneAudio.preload = 'auto';
+
+function updateMusicButton() {
+  const btn = document.getElementById('music-toggle-btn');
+  const btnSmall = document.getElementById('music-toggle-btn-small');
+  const symbol = musicPlaying ? '⏸' : '▶';
+  if (btn) btn.textContent = symbol;
+  if (btnSmall) btnSmall.textContent = symbol;
+  updateVolumeIndicator();
+}
+
+function stopMusicSilently() {
+  if (musicPlaying) {
+    audio.pause();
+    musicPlaying = false;
+    updateMusicButton();
+  }
+}
+
+// Try to start music, but only once automatically on openSurprise
+function startMusic(){
+  if (audioPlayedOnce) return;
+  audioPlayedOnce = true;
+  audio.volume = 0.20; 
+  audio.loop = false;
+  audio.play().then(()=>{
+    musicPlaying = true;
+    updateMusicButton();
+  }).catch(e => {
+    // Autoplay may be blocked by browser — UI will allow user to play manually
+    musicPlaying = false;
+    updateMusicButton();
+  });
+}
+
+// Prevent automatic resuming after videos: only stop music when any video plays
+function anyVideoPlaying() {
+  return Array.from(document.querySelectorAll('video')).some(v =>
+    !v.paused && !v.ended && v.readyState > 2
+  );
+}
+
+function attachVideoListeners() {
+  document.querySelectorAll('video').forEach(video => {
+    video.addEventListener('play', () => {
+      stopMusicSilently();
+    });
+    // remove automatic resume to ensure audio plays once only automatically
+    // do NOT resume music when video is paused/ended.
+  });
+}
+
+attachVideoListeners();
+
+function toggleMusic(){
+  if(musicPlaying){
+    audio.pause();
+    musicPlaying = false;
+    updateMusicButton();
+  } else {
+    audio.play().then(()=>{ // user-initiated play allowed by browsers
+      musicPlaying = true;
+      updateMusicButton();
+    }).catch((e)=>{
+      musicPlaying = false;
+      updateMusicButton();
+    });
+  }
+}
+
+// Play tone audio and pause background music
+function playToneAudio(){
+  // Pause background music
+  if(musicPlaying){
+    audio.pause();
+    musicPlaying = false;
+    updateMusicButton();
+  }
+  
+  // Play tone sound
+  toneAudio.currentTime = 0; // Reset to beginning
+  toneAudio.play().catch(e => {
+    console.log('Tone audio failed to play:', e);
+  });
+}
+
+// Resume music when tone finishes
+toneAudio.addEventListener('ended', () => {
+  if(audioPlayedOnce) {
+    startMusic();
+  }
+});
+
+function adjustVolume(changeValue) {
+  let newVolume = Math.min(1, Math.max(0, audio.volume + changeValue));
+  audio.volume = newVolume;
+  updateVolumeIndicator();
+}
+
+function updateVolumeIndicator(){
+  const el = document.getElementById('volume-level');
+  if(!el) return;
+  el.textContent = Math.round(audio.volume * 100) + '%';
+}
+
+// Radio Knob Rotation Control
+(function setupRadioKnob(){
+  const knob = document.getElementById('volume-knob');
+  if(!knob) return;
+  
+  let isRotating = false;
+  let startY = 0;
+  let startVolume = audio.volume;
+  let currentRotation = 0;
+  
+  // Calculate initial rotation based on current volume
+  function updateRotationFromVolume(){
+    currentRotation = audio.volume * 360; // 0-360 degrees (0-100% volume)
+    knob.querySelector('.radio-knob-indicator').style.transform = `rotate(${currentRotation}deg)`;
+  }
+  
+  // Initialize knob rotation
+  updateRotationFromVolume();
+  
+  knob.addEventListener('pointerdown', (e) => {
+    isRotating = true;
+    startY = e.clientY;
+    startVolume = audio.volume;
+    knob.style.cursor = 'grabbing';
+  });
+  
+  document.addEventListener('pointermove', (e) => {
+    if(!isRotating) return;
+    
+    const deltaY = e.clientY - startY;
+    // Every 2 pixels of movement = 1% volume change
+    const volumeChange = (deltaY / 2) * 0.01;
+    let newVolume = Math.min(1, Math.max(0, startVolume - volumeChange));
+    
+    audio.volume = newVolume;
+    currentRotation = newVolume * 360;
+    knob.querySelector('.radio-knob-indicator').style.transform = `rotate(${currentRotation}deg)`;
+    updateVolumeIndicator();
+  });
+  
+  document.addEventListener('pointerup', () => {
+    isRotating = false;
+    knob.style.cursor = 'grab';
+  });
+  
+  // Mouse wheel support for volume adjustment on knob
+  knob.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    let newVolume = audio.volume + (e.deltaY < 0 ? 0.05 : -0.05);
+    newVolume = Math.min(1, Math.max(0, newVolume));
+    audio.volume = newVolume;
+    currentRotation = newVolume * 360;
+    knob.querySelector('.radio-knob-indicator').style.transform = `rotate(${currentRotation}deg)`;
+    updateVolumeIndicator();
+  }, {passive: false});
+})();
+
+// Wrap each .float-card's children into a .float-inner so the floating animation can run
+(function ensureFloatInner(){
+  document.querySelectorAll('.float-card').forEach(card => {
+    if(card.querySelector('.float-inner')) return;
+    const inner = document.createElement('div');
+    inner.className = 'float-inner';
+    // move card children into inner
+    while(card.firstChild) inner.appendChild(card.firstChild);
+    card.appendChild(inner);
+  });
+})();
+
+// Interactive gallery: single-select behavior (pointer & keyboard support)
+(function setupInteractiveGallery(){
+  const gallery = document.querySelector('.gallery3d');
+  if(!gallery) return;
+  const items = Array.from(gallery.querySelectorAll('.float-card'));
+  if(items.length === 0) return;
+
+  // Make items focusable for keyboard
+  items.forEach((it, i) => {
+    it.setAttribute('tabindex', '0');
+    // pointer down selects (works for mouse & touch)
+    it.addEventListener('pointerdown', (ev) => {
+      ev.stopPropagation();
+      selectIndex(i);
+    }, {passive:true});
+    // keyboard activation
+    it.addEventListener('keydown', (ev) => {
+      if(ev.key === 'Enter' || ev.key === ' '){
+        ev.preventDefault();
+        selectIndex(i);
+      } else if(ev.key === 'Escape'){
+        clearSelection();
+      }
+    });
+  });
+
+  // click / pointer on page outside gallery clears selection
+  document.addEventListener('pointerdown', (ev) => {
+    if(!ev.target.closest('.gallery3d')){
+      clearSelection();
+    }
+  }, {passive:true});
+
+  // selects item by index
+  function selectIndex(index){
+    const target = items[index];
+    if(!target) return;
+    // if already active, toggle off
+    if(target.classList.contains('active')){
+      clearSelection();
+      return;
+    }
+    items.forEach((el, idx) => {
+      if(idx === index){
+        el.classList.add('active');
+        el.classList.remove('inactive');
+        // Bring into view a bit if small screen
+        setTimeout(()=> {
+          try {
+            // center differently on phone vs pc
+            if(document.body.classList.contains('view-phone')){
+              el.scrollIntoView({behavior:'smooth', block:'center'});
+            } else {
+              el.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+            }
+          } catch(e) {}
+        }, 80);
+      } else {
+        el.classList.add('inactive');
+        el.classList.remove('active');
+      }
+    });
+  }
+
+  // clear any selection
+  function clearSelection(){
+    items.forEach(el => el.classList.remove('active','inactive'));
+  }
+
+  // double-tap behavior: tapping active twice clears selection
+  items.forEach((el, idx) => {
+    let lastTap = 0;
+    el.addEventListener('pointerdown', () => {
+      const now = Date.now();
+      if(el.classList.contains('active') && now - lastTap < 350){
+        clearSelection();
+      }
+      lastTap = now;
+    }, {passive:true});
+  });
+
+})();
+
+// init UI
+updateVolumeIndicator();
+lucide.createIcons();
+  </script>
+</body>
+</html>
